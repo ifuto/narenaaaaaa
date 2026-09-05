@@ -251,6 +251,17 @@
     .name-gradient{background:linear-gradient(90deg,#31bdee,#2864da);color:transparent;background-clip:text;-webkit-background-clip:text;display:inline-block;font-weight:650}
     .name-gradient.plus{background-image:linear-gradient(90deg,#6673f5,#e77cba)}
     .comparison-note{font-family:var(--jp);font-size:11px;color:#8a9eae;line-height:2;margin-top:18px}
+    .billing-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 24px}
+    .billing-toggle{display:inline-flex;gap:4px;background:#f0f6fa;border:1px solid #dce8f1;border-radius:8px;padding:4px}
+    .billing-option{display:inline-flex;align-items:center;gap:8px;border:0;background:none;border-radius:5px;padding:9px 20px;font-family:var(--jp);font-size:12px;font-weight:600;color:#6f8293;line-height:1.5;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
+    .billing-option[aria-pressed="true"]{background:var(--blue);color:#fff;box-shadow:0 4px 12px #078cde26}
+    .save-badge{font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:.6px;background:#e2f7ee;color:var(--green);padding:2px 7px;border-radius:20px;line-height:1.5}
+    .billing-option[aria-pressed="true"] .save-badge{background:rgba(255,255,255,.22);color:#fff}
+    .billing-hint{font-family:var(--jp);font-size:11px;color:#8498a8;line-height:1.7}
+    .plan-price-original{display:block;font-family:var(--jp);font-size:12px;font-weight:400;color:#9aabb8;line-height:1.9}
+    .plan-annual-note{font-family:var(--jp);font-size:10px;font-weight:600;color:var(--green);margin-top:6px;line-height:1.7}
+    .dialog-inner .billing-toggle{margin-top:22px}
+    .dialog-plan-original{margin-top:14px}
     .preview-section{margin-top:65px;padding-top:35px;border-top:1px solid var(--line)}
     .preview-section h2{font-family:var(--jp);font-size:22px;font-weight:700;line-height:1.6}
     .preview-section>.section-copy{margin-top:8px}
@@ -542,7 +553,7 @@
   </header>
 
   <main id="main-content" tabindex="-1"></main>
-  <noscript><div class="container" style="padding:60px 0"><h1>N Arena</h1><p>このサイトのページ切り替えにはJavaScriptが必要です。ブラウザのJavaScriptを有効にしてください。</p><p>公開中のFFA: Creeper / LT Vanilla。VIP: 月額480円、VIP+: 月額1080円。</p></div></noscript>
+  <noscript><div class="container" style="padding:60px 0"><h1>N Arena</h1><p>このサイトのページ切り替えにはJavaScriptが必要です。ブラウザのJavaScriptを有効にしてください。</p><p>公開中のFFA: Creeper / LT Vanilla。VIP: 月額480円・年額4,608円、VIP+: 月額1,080円・年額10,368円（年払いで20%OFF）。</p></div></noscript>
 
   <footer class="site-footer">
     <div class="container">
@@ -592,7 +603,7 @@
       port: '',
       discordUrl: 'https://discord.com/invite/uVB6vkTdhS',
       supportEmail: '',
-      checkoutUrls: { vip: '', vipPlus: '' },
+      checkoutUrls: { vip: '', vipPlus: '', vipAnnual: '', vipPlusAnnual: '' },
       purchaseTermsUrl: '',
       heroImage: 'https://wallpapers.com/images/hd/minecraft-shaders-1440-x-900-ktqpi8tj3wa5eu7e.jpg',
       heroCredit: 'will261084 / Wallpapers.com',
@@ -639,6 +650,15 @@
       { id:'vipPlus', name:'VIP+', price:1080, description:'もっと自由に。すべてのカスタマイズを。', features:['すべての鍛冶型・鉱石を使用可能', 'プレイヤー名のグラデーションを好きな色に設定可能'] }
     ];
 
+    // Annual billing: one payment of 12 months with a 20% discount.
+    const ANNUAL_MONTHS = 12;
+    const ANNUAL_DISCOUNT = 0.2;
+    const annualPrice = plan => Math.round(plan.price * ANNUAL_MONTHS * (1 - ANNUAL_DISCOUNT));
+    const planBilling = (plan, billing) => billing === 'annual'
+      ? { total: annualPrice(plan), monthly: Math.round(annualPrice(plan) / ANNUAL_MONTHS), period: '円 / 年', caption: '年払い / 20%OFF' }
+      : { total: plan.price, monthly: plan.price, period: '円 / 月', caption: '月払い' };
+    const annualSavings = plan => plan.price * ANNUAL_MONTHS - annualPrice(plan);
+
     const FAQS = [
       { id:'join', category:'参加について', question:'N Arenaにはどうやって参加できますか？', answer:['サーバー情報ページで対応エディション・バージョンと接続アドレスを確認し、Minecraftのサーバー追加画面から接続してください。初めて参加する前に、サーバールールもご確認ください。'], link:{ label:'参加方法とサーバー情報を見る', href:'#/info' } },
       { id:'version', category:'参加について', question:'対応しているエディション・バージョンは？', answer:['対応エディションとバージョンは、Server Informationに掲載します。「未公開」と表示されている項目は、運営からの案内をお待ちください。'], link:{ label:'対応環境を確認する', href:'#/info' } },
@@ -647,7 +667,8 @@
       { id:'upcoming-ffa', category:'ゲームモード', question:'ほかのキットのFFAはいつ公開されますか？', answer:['Bowを除くキットのFFAを順次公開予定です。ただし、HT Vanilla FFAの公開予定はありません。具体的な公開日は未定です。公開状況はFFAページとNewsでご案内します。'], link:{ label:'公開予定のFFAを見る', href:'#/ffa' } },
       { id:'vip-difference', category:'VIPについて', question:'VIPとVIP+は何が違いますか？', dynamic:'vip-difference', answer:[], link:{ label:'特典を比較する', href:'#/vip' } },
       { id:'vip-exclusions', category:'VIPについて', question:'VIPでは使えない鍛冶型・鉱石は？', dynamic:'vip-exclusions', answer:[], link:{ label:'VIP / VIP+の比較を見る', href:'#/vip' } },
-      { id:'vip-purchase', category:'VIPについて', question:'VIPの申し込み・解約方法を教えてください。', answer:['VIPページで希望するプランを選ぶと、申し込み案内を確認できます。決済先が未公開の場合、このサイトから申し込むことはできず、料金も発生しません。受付開始後は、購入ページに記載される支払い方法・更新・解約条件を必ず確認してください。'], link:{ label:'VIPページへ', href:'#/vip' } },
+      { id:'vip-annual', category:'VIPについて', question:'年額払いはありますか？', dynamic:'vip-annual', answer:[], link:{ label:'VIPページへ', href:'#/vip' } },
+      { id:'vip-purchase', category:'VIPについて', question:'VIPの申し込み・解約方法を教えてください。', answer:['VIPページで希望するプランと月払い・年払いを選ぶと、申し込み案内を確認できます。決済先が未公開の場合、このサイトから申し込むことはできず、料金も発生しません。受付開始後は、購入ページに記載される支払い方法・更新・解約条件を必ず確認してください。'], link:{ label:'VIPページへ', href:'#/vip' } },
       { id:'mods', category:'サポート', question:'MODやクライアントは使ってもいいですか？', answer:['不公平な優位性を生む機能や、操作を自動化するツールは禁止です。利用可否が分からないMOD・クライアントは、使用前に運営へ確認してください。'], link:{ label:'公平なプレイのルールを読む', href:'#/rules' } },
       { id:'report', category:'サポート', question:'不具合やルール違反を報告するには？', answer:['発生日時、状況、再現手順などを整理して、公式の問い合わせ窓口へご連絡ください。スクリーンショットや動画があると確認に役立ちます。他のプレイヤーの個人情報や、パスワードなどは送らないでください。'], link:{ label:'問い合わせ窓口を確認する', href:'#/info' } }
     ];
@@ -665,10 +686,11 @@
         { heading:'N Arenaだけのオリジナル', text:'とにかく生き抜く「Just Live」と、ネザライトで剣の戦いを楽しむ「Netherite Sword」。どちらもN Arena Originalのキットです。いつもと違うPvPを楽しみたいときに、ぜひ試してみてください。' },
         { heading:'LT / HTにも対応', text:'CartとVanillaには、LT / HTの2つのバリエーションがあります。詳しい装備構成は、ゲーム内のキット選択画面をご確認ください。' }
       ], link:{ label:'キット一覧を見る', href:'#/kits' } },
-      { id:'vip-membership', category:'VIP', date:'', title:'VIP / VIP+で、装備と名前をもっと自分らしく', summary:'2つの月額プランと、それぞれのカスタマイズ特典をご紹介。', body:[
-        { text:'装備の見た目やプレイヤー名に、自分らしいカラーを。N Arenaには、VIPとVIP+の2種類の月額会員プランがあります。' },
+      { id:'vip-membership', category:'VIP', date:'', title:'VIP / VIP+で、装備と名前をもっと自分らしく', summary:'2つの会員プランと、年額払いで20%OFFになるお得なプランをご紹介。', body:[
+        { text:'装備の見た目やプレイヤー名に、自分らしいカラーを。N Arenaには、VIPとVIP+の2種類の会員プランがあります。' },
         { heading:'VIP: 月額480円', text:'静寂・豚鼻の鍛冶型、クオーツ・金・アメジスト・ダイヤモンドの鉱石を除く、すべての鍛冶型・鉱石を使用できます。プレイヤー名は、水色から青色のグラデーションになります。' },
-        { heading:'VIP+: 月額1080円', text:'すべての鍛冶型・鉱石を使用できます。さらに、プレイヤー名のグラデーションを好きな色に設定できます。VIPページではカラーのプレビューもお試しいただけます。' }
+        { heading:'VIP+: 月額1080円', text:'すべての鍛冶型・鉱石を使用できます。さらに、プレイヤー名のグラデーションを好きな色に設定できます。VIPページではカラーのプレビューもお試しいただけます。' },
+        { heading:'年額払いで、20%OFF', text:'年単位でお支払いいただくと、各プランとも年間のご利用料金が20%OFFになります。VIPは年額4,608円（月あたり約384円相当）、VIP+は年額10,368円（月あたり約864円相当）です。長く遊ぶほど、お得にご利用いただけます。' }
       ], link:{ label:'VIP / VIP+を比較する', href:'#/vip' } }
     ];
 
@@ -741,8 +763,9 @@
     const displayKitName = kit => kit.name+(kit.variants ? ' (LT / HT)' : '');
     function getFaqAnswer(faq) {
       if(faq.dynamic==='live-ffa') return [`現在公開中のFFAは、${liveModes().map(mode=>mode.name).join('と')}です。「順次公開予定」のモードは、まだ公開されていません。`];
-      if(faq.dynamic==='vip-difference') return [`${PLANS.map(plan=>`${plan.name}は月額${plan.price}円`).join('、')}です。VIPは一部を除く鍛冶型・鉱石を使用でき、名前が水色から青色のグラデーションになります。VIP+はすべての鍛冶型・鉱石を使用でき、名前のグラデーションを好きな色に設定できます。`];
+      if(faq.dynamic==='vip-difference') return [`${PLANS.map(plan=>`${plan.name}は月額${plan.price}円（年払いなら年額${annualPrice(plan).toLocaleString('ja-JP')}円）`).join('、')}です。VIPは一部を除く鍛冶型・鉱石を使用でき、名前が水色から青色のグラデーションになります。VIP+はすべての鍛冶型・鉱石を使用でき、名前のグラデーションを好きな色に設定できます。`];
       if(faq.dynamic==='vip-exclusions') return [`VIPでは、${[...VIP_EXCLUSIONS.templates,...VIP_EXCLUSIONS.ores].join('、')}は使用できません。VIP+では、これらを含むすべての鍛冶型・鉱石を使用できます。`];
+      if(faq.dynamic==='vip-annual') return [`年額でお支払いいただくと、各プランとも年間のご利用料金が20%OFFになります。${PLANS.map(plan=>`${plan.name}は年額${annualPrice(plan).toLocaleString('ja-JP')}円（ひと月あたり約${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')}円相当）で、年間${annualSavings(plan).toLocaleString('ja-JP')}円お得`).join('、')}です。受付開始後は、購入ページに記載されるお支払い・更新・解約条件をご確認ください。`];
       return faq.answer;
     }
 
@@ -757,7 +780,7 @@
     const state = {
       kitCategory:'all', kitQuery:'', faqCategory:'すべて', faqQuery:'', faqOpen:new Set(),
       newsCategory:'すべて', previewName:'NArena_Player', colorFrom:'#6673f5', colorTo:'#e77cba',
-      rulesRead:false
+      rulesRead:false, billing:'monthly'
     };
     try { state.rulesRead = localStorage.getItem('narena-rules')===SITE.rulesVersion; } catch {}
 
@@ -770,6 +793,7 @@
     let revealObserver;
     let toastTimer;
     let dialogOpener;
+    let currentPlanId=null;
     let routeSerial = 0;
     const scrollPositions = new Map();
     try { history.scrollRestoration='manual'; } catch {}
@@ -802,7 +826,7 @@
         <section class="section featured-section"><div class="container"><div class="section-heading-row reveal"><div><p class="eyebrow">FIND YOUR FIGHT</p><h2 class="section-title">君のスタイルで、戦おう。</h2></div><a href="#/kits" class="text-link">すべてのキットを見る${icon('arrow')}</a></div><div class="kit-grid reveal">${featured.map(kitCard).join('')}</div></div></section>
         <section class="home-ffa"><div class="container home-ffa-layout reveal"><div><p class="eyebrow">FREE FOR ALL</p><h2 class="section-title">待つより、飛び込め。</h2><p class="section-copy">いつでも、自分のペースで。<br>${esc(liveModes().map(mode=>mode.name).join('と'))}のFFAを公開中。</p><a href="#/ffa" class="text-link">FFAの公開状況を見る${icon('arrow')}</a></div><div class="ffa-feature-links">${liveModes().map(mode=>`<a class="ffa-feature-link" href="#/ffa/${mode.id}" aria-label="${esc(mode.name)} FFAの詳細">${pixel(mode.icon)}<div class="ffa-feature-bottom"><div>${statusLabel('live')}<h3>${esc(mode.name)}</h3></div>${icon('diagonal')}</div></a>`).join('')}</div></div></section>
         <section class="section"><div class="container reveal"><div class="section-heading-row"><div><p class="eyebrow">WHAT'S NEW</p><h2 class="section-title">アリーナからのお知らせ。</h2></div><a href="#/news" class="text-link">すべてのお知らせ${icon('arrow')}</a></div><div class="news-list">${NEWS.slice(0,3).map((article,index)=>newsRow(article,index)).join('')}</div></div></section>
-        <section class="home-vip"><div class="container home-vip-inner reveal"><div><p class="eyebrow">A LITTLE MORE YOU</p><h2>N ARENA VIP</h2><p>その名前に、自分らしさを。月額${Math.min(...PLANS.map(plan=>plan.price))}円からのカスタマイズ。</p></div><a href="#/vip" class="btn btn-white">VIP / VIP+をチェック${icon('arrow','arrow')}</a></div></section>`;
+        <section class="home-vip"><div class="container home-vip-inner reveal"><div><p class="eyebrow">A LITTLE MORE YOU</p><h2>N ARENA VIP</h2><p>その名前に、自分らしさを。月額${Math.min(...PLANS.map(plan=>plan.price)).toLocaleString('ja-JP')}円から。年額払いなら20%OFF。</p></div><a href="#/vip" class="btn btn-white">VIP / VIP+をチェック${icon('arrow','arrow')}</a></div></section>`;
     }
 
     function renderKits() {
@@ -843,15 +867,22 @@
       return `<span class="feature-value ${available ? '' : 'unavailable'}">${icon(available ? 'check' : 'minus')}${available ? esc(caption) : '使用できません'}</span>`;
     }
     function renderVip() {
-      return `${pageHeading('Membership','N ARENA VIP','装備にも、その名前にも、自分らしさを。2つの月額プランで広がるカスタマイズ。')}
+      return `${pageHeading('Membership','N ARENA VIP','装備にも、その名前にも、自分らしさを。2つの会員プランと、年額払いで20%OFF。')}
         <div class="container page-body">
+          <div class="billing-bar" role="group" aria-label="お支払いサイクル">
+            <div class="billing-toggle">
+              <button type="button" class="billing-option" data-action="set-billing" data-billing="monthly" aria-pressed="true">月払い</button>
+              <button type="button" class="billing-option" data-action="set-billing" data-billing="annual" aria-pressed="false">年払い<span class="save-badge">20%OFF</span></button>
+            </div>
+            <p class="billing-hint">年払いは年額一括のお支払いで、年間料金が20%OFFになります。</p>
+          </div>
           <p class="table-scroll-hint">${icon('arrow')}横にスクロールして、VIPとVIP+を比較できます</p>
           <div class="comparison-wrap" role="region" aria-label="VIPとVIP+の比較表。小さな画面では横にスクロールできます。" tabindex="0">
             <table class="comparison-table">
               <caption>ふたつのプラン。違いは、シンプル。</caption>
               <thead><tr>
                 <th scope="col"><span class="eyebrow" style="margin-top:7px">CHOOSE YOUR STYLE</span><p class="plan-caption" style="margin-top:17px">好きな見た目で、<br>いつもの戦いをもっと楽しく。</p></th>
-                ${PLANS.map(plan=>`<th scope="col"><div class="plan-label ${plan.id==='vipPlus' ? 'plus' : ''}">${plan.name}</div><div class="plan-price">${plan.price.toLocaleString('ja-JP')}<span>円 / 月</span></div><p class="plan-caption">${plan.id==='vip' ? 'こだわりの第一歩に。' : 'すべてを、自分らしく。'}</p></th>`).join('')}
+                ${PLANS.map(plan=>`<th scope="col" data-billing-plan="${plan.id}"><div class="plan-label ${plan.id==='vipPlus' ? 'plus' : ''}">${plan.name}</div><div class="plan-price"><span class="plan-price-original" data-annual hidden>通常 ${(plan.price*ANNUAL_MONTHS).toLocaleString('ja-JP')} 円 / 年</span><span data-price-total>${plan.price.toLocaleString('ja-JP')}</span><span data-price-period>円 / 月</span></div><p class="plan-annual-note" data-annual hidden>20%OFF — ひと月あたり約 ${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')} 円相当・年間 ${annualSavings(plan).toLocaleString('ja-JP')} 円お得</p><p class="plan-caption" data-billing-caption>月払い</p></th>`).join('')}
               </tr></thead>
               <tbody>
                 <tr><th scope="row">通常の鍛冶型・鉱石<small>下記6種類を除くすべて</small></th><td>${featureValue(true)}</td><td>${featureValue(true)}</td></tr>
@@ -860,7 +891,7 @@
                 <tr><th scope="row">プレイヤー名のグラデーション</th><td><span class="name-gradient">Aqua to Blue</span><p class="plan-caption">水色から青色の固定カラー</p></td><td><span class="name-gradient plus">Your Own Colors</span><p class="plan-caption">好きな色にカスタマイズ</p></td></tr>
               </tbody>
               <tfoot><tr>
-                <td><p class="plan-caption">各プランは月額会員プランです。</p></td>
+                <td><p class="plan-caption" data-billing-note>各プランは月額会員プランです。</p></td>
                 ${PLANS.map(plan=>`<td><button class="btn ${plan.id==='vipPlus' ? 'btn-primary' : 'btn-secondary'}" type="button" data-action="choose-plan" data-plan="${plan.id}">${plan.name}を選ぶ${icon('arrow','arrow')}</button></td>`).join('')}
               </tr></tfoot>
             </table>
@@ -887,7 +918,7 @@
             </div>
             <p class="inline-note">サイト上の表示イメージです。ゲーム内の設定は変更されません。名前や色の入力内容は送信されません。</p>
           </section>
-          <p class="vip-smallprint">お申し込み前に、購入ページの支払い・更新・解約条件をご確認ください。受付が準備中の場合、このサイト上で課金が発生することはありません。<br>ご不明な点は<a href="#/faq" class="text-link">よくある質問${icon('arrow')}</a>をご確認ください。</p>
+          <p class="vip-smallprint">年額プランは年額一括でのお支払いとなります。プラン・お支払いサイクルに応じた月払い・年払いの両方をご用意しています。お申し込み前に、購入ページの支払い・更新・解約条件をご確認ください。受付が準備中の場合、このサイト上で課金が発生することはありません。<br>ご不明な点は<a href="#/faq" class="text-link">よくある質問${icon('arrow')}</a>をご確認ください。</p>
         </div>`;
     }
 
@@ -1004,6 +1035,7 @@
       if(path==='/kits') updateKitResults();
       if(path==='/faq') updateFaqResults();
       if(path==='/news') updateNewsResults();
+      if(path==='/vip') updateBillingUI();
       const heroImage=main.querySelector('.hero-media');
       if(heroImage) heroImage.addEventListener('error',()=>heroImage.remove(),{once:true});
       currentHash=location.hash || '#/';
@@ -1044,9 +1076,21 @@
     function openPlan(id) {
       const plan=PLANS.find(item=>item.id===id);
       if(!plan) return;
-      const checkout=externalUrl(SITE.checkoutUrls[id]);
+      currentPlanId=id;
+      const checkoutKey=state.billing==='annual' ? id+'Annual' : id;
+      const checkout=externalUrl(SITE.checkoutUrls[checkoutKey]);
       const terms=externalUrl(SITE.purchaseTermsUrl);
-      openDialog(`${dialogHeading('N ARENA MEMBERSHIP',plan.name+'で、もっと自分らしく。',plan.description)}<div class="dialog-plan-price">${plan.price.toLocaleString('ja-JP')}<span>円 / 月</span></div><ul class="dialog-plan-features">${plan.features.map(feature=>`<li>${icon('check')}<span>${esc(feature)}</span></li>`).join('')}</ul>${id==='vip' ? `<p class="inline-note" style="margin-top:14px">対象外: ${[...VIP_EXCLUSIONS.templates,...VIP_EXCLUSIONS.ores].map(esc).join('、')}。</p>` : ''}${checkout ? `<p class="dialog-description">外部の購入ページへ移動します。支払い方法・契約の更新・解約条件を確認したうえでお申し込みください。</p><div class="dialog-actions"><a class="btn btn-primary" href="${esc(checkout)}" target="_blank" rel="noopener noreferrer">購入ページで確認${icon('diagonal')}</a>${terms ? `<a class="text-link" href="${esc(terms)}" target="_blank" rel="noopener noreferrer">購入条件${icon('diagonal')}</a>` : ''}</div>` : '<div class="notice blue"><h3>Webからのお申し込みは準備中です</h3><p>現在はプランの詳細をご確認いただけます。この操作によって申し込みや課金が発生することはありません。</p></div><div class="dialog-footer"><a class="text-link" href="#/faq">VIPについてのFAQを見る'+icon('arrow')+'</a><button type="button" class="text-link" style="border:0;background:none" data-action="close-dialog">閉じる</button></div>'}`);
+      const features=[...plan.features];
+      if(state.billing==='annual') features.push(`年払いで年間料金が20%OFF（年間${annualSavings(plan).toLocaleString('ja-JP')}円お得）`);
+      openDialog(`${dialogHeading('N ARENA MEMBERSHIP',plan.name+'で、もっと自分らしく。',plan.description)}
+        <div class="billing-toggle" role="group" aria-label="お支払いサイクル">
+          <button type="button" class="billing-option" data-action="set-billing" data-billing="monthly" aria-pressed="false">月払い</button>
+          <button type="button" class="billing-option" data-action="set-billing" data-billing="annual" aria-pressed="false">年払い<span class="save-badge">20%OFF</span></button>
+        </div>
+        <div data-billing-plan="${plan.id}"><div class="dialog-plan-price"><span class="plan-price-original dialog-plan-original" data-annual hidden>通常 ${(plan.price*ANNUAL_MONTHS).toLocaleString('ja-JP')} 円 / 年</span><span data-price-total>${plan.price.toLocaleString('ja-JP')}</span><span data-price-period>円 / 月</span></div><p class="plan-annual-note" data-annual hidden>20%OFF — ひと月あたり約 ${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')} 円相当・年間 ${annualSavings(plan).toLocaleString('ja-JP')} 円お得</p></div>
+        <ul class="dialog-plan-features">${features.map(feature=>`<li>${icon('check')}<span>${esc(feature)}</span></li>`).join('')}</ul>${id==='vip' ? `<p class="inline-note" style="margin-top:14px">対象外: ${[...VIP_EXCLUSIONS.templates,...VIP_EXCLUSIONS.ores].map(esc).join('、')}。</p>` : ''}
+        ${checkout ? `<p class="dialog-description">外部の購入ページへ移動します。支払い方法・契約の更新・解約条件を確認したうえでお申し込みください。</p><div class="dialog-actions"><a class="btn btn-primary" href="${esc(checkout)}" target="_blank" rel="noopener noreferrer">購入ページで確認${icon('diagonal')}</a>${terms ? `<a class="text-link" href="${esc(terms)}" target="_blank" rel="noopener noreferrer">購入条件${icon('diagonal')}</a>` : ''}</div>` : '<div class="notice blue"><h3>Webからのお申し込みは準備中です</h3><p>現在はプランの詳細をご確認いただけます。この操作によって申し込みや課金が発生することはありません。</p></div><div class="dialog-footer"><a class="text-link" href="#/faq">VIPについてのFAQを見る'+icon('arrow')+'</a><button type="button" class="text-link" style="border:0;background:none" data-action="close-dialog">閉じる</button></div>'}`);
+      updateBillingUI();
     }
     function showToast(message,kind='check') {
       const toast=document.getElementById('toast');
@@ -1114,6 +1158,31 @@
       document.getElementById('vip-plus-name').style.backgroundImage=`linear-gradient(90deg,${state.colorFrom},${state.colorTo})`;
     }
 
+    // Keeps every price display in sync with the selected billing cycle.
+    function updateBillingUI() {
+      const annual=state.billing==='annual';
+      document.querySelectorAll('.billing-option').forEach(button=>{
+        button.setAttribute('aria-pressed',String(button.dataset.billing===state.billing));
+      });
+      const planById=Object.fromEntries(PLANS.map(plan=>[plan.id,plan]));
+      document.querySelectorAll('[data-billing-plan]').forEach(element=>{
+        const plan=planById[element.dataset.billingPlan];
+        if(!plan) return;
+        const billing=planBilling(plan,state.billing);
+        const total=element.querySelector('[data-price-total]');
+        const period=element.querySelector('[data-price-period]');
+        if(total) total.textContent=billing.total.toLocaleString('ja-JP');
+        if(period) period.textContent=billing.period;
+      });
+      document.querySelectorAll('[data-annual]').forEach(element=>{ element.hidden=!annual; });
+      document.querySelectorAll('[data-billing-caption]').forEach(element=>{
+        element.textContent=annual ? '年払い / 20%OFF' : '月払い';
+      });
+      document.querySelectorAll('[data-billing-note]').forEach(element=>{
+        element.textContent=annual ? '年払いは年額一括のお支払いです。' : '各プランは月額会員プランです。';
+      });
+    }
+
     document.addEventListener('click',event=>{
       const skip=event.target.closest('[data-skip]');
       if(skip){event.preventDefault();main.focus();main.scrollIntoView({behavior:'instant'});return;}
@@ -1134,6 +1203,11 @@
       else if(action==='contact') openContact();
       else if(action==='copy-ip') copyAddress();
       else if(action==='choose-plan') openPlan(target.dataset.plan);
+      else if(action==='set-billing'){
+        state.billing=target.dataset.billing==='annual' ? 'annual' : 'monthly';
+        if(currentPlanId && dialog.open){openPlan(currentPlanId);}
+        else updateBillingUI();
+      }
       else if(action==='close-dialog') dialog.close();
       else if(action==='toggle-guide'){
         const dropdown=document.getElementById('guide-dropdown');dropdown.hidden=!dropdown.hidden;target.setAttribute('aria-expanded',String(!dropdown.hidden));
@@ -1189,6 +1263,7 @@
     });
     dialog.addEventListener('close',()=>{
       document.body.classList.remove('modal-open');
+      currentPlanId=null;
       const openerVisible=dialogOpener?.isConnected && dialogOpener.getClientRects().length;
       const focusTarget=openerVisible ? dialogOpener : (innerWidth<=760 ? document.getElementById('mobile-toggle') : main.querySelector('h1'));
       focusTarget?.focus({preventScroll:true});
