@@ -258,10 +258,11 @@
     .save-badge{font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:.6px;background:#e2f7ee;color:var(--green);padding:2px 7px;border-radius:20px;line-height:1.5}
     .billing-option[aria-pressed="true"] .save-badge{background:rgba(255,255,255,.22);color:#fff}
     .billing-hint{font-family:var(--jp);font-size:11px;color:#8498a8;line-height:1.7}
-    .plan-price-original{display:block;font-family:var(--jp);font-size:12px;font-weight:400;color:#9aabb8;line-height:1.9}
+    .plan-price-original{display:block;font-family:var(--jp);font-size:12px;font-weight:400;color:#a3b1bd;line-height:1.9;text-decoration:line-through;text-decoration-color:#b7c4cf;text-decoration-thickness:1.5px}
+    .price-block.is-annual .price-current{color:var(--green);font-weight:700}
+    .price-block.is-annual .price-current [data-price-period]{color:#4a9480}
     .plan-annual-note{font-family:var(--jp);font-size:10px;font-weight:600;color:var(--green);margin-top:6px;line-height:1.7}
     .dialog-inner .billing-toggle{margin-top:22px}
-    .dialog-plan-original{margin-top:14px}
     .preview-section{margin-top:65px;padding-top:35px;border-top:1px solid var(--line)}
     .preview-section h2{font-family:var(--jp);font-size:22px;font-weight:700;line-height:1.6}
     .preview-section>.section-copy{margin-top:8px}
@@ -882,7 +883,7 @@
               <caption>ふたつのプラン。違いは、シンプル。</caption>
               <thead><tr>
                 <th scope="col"><span class="eyebrow" style="margin-top:7px">CHOOSE YOUR STYLE</span><p class="plan-caption" style="margin-top:17px">好きな見た目で、<br>いつもの戦いをもっと楽しく。</p></th>
-                ${PLANS.map(plan=>`<th scope="col" data-billing-plan="${plan.id}"><div class="plan-label ${plan.id==='vipPlus' ? 'plus' : ''}">${plan.name}</div><div class="plan-price"><span class="plan-price-original" data-annual hidden>通常 ${(plan.price*ANNUAL_MONTHS).toLocaleString('ja-JP')} 円 / 年</span><span data-price-total>${plan.price.toLocaleString('ja-JP')}</span><span data-price-period>円 / 月</span></div><p class="plan-annual-note" data-annual hidden>20%OFF — ひと月あたり約 ${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')} 円相当・年間 ${annualSavings(plan).toLocaleString('ja-JP')} 円お得</p><p class="plan-caption" data-billing-caption>月払い</p></th>`).join('')}
+                ${PLANS.map(plan=>`<th scope="col" data-billing-plan="${plan.id}"><div class="plan-label ${plan.id==='vipPlus' ? 'plus' : ''}">${plan.name}</div><div class="plan-price price-block"><span class="plan-price-original" data-annual hidden>通常 ${(plan.price*ANNUAL_MONTHS).toLocaleString('ja-JP')} 円</span><span class="price-current"><span data-price-total>${plan.price.toLocaleString('ja-JP')}</span><span data-price-period>円 / 月</span></span></div><p class="plan-annual-note" data-annual hidden>20%OFF — ひと月あたり約 ${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')} 円相当・年間 ${annualSavings(plan).toLocaleString('ja-JP')} 円お得</p><p class="plan-caption" data-billing-caption>月払い</p></th>`).join('')}
               </tr></thead>
               <tbody>
                 <tr><th scope="row">通常の鍛冶型・鉱石<small>下記6種類を除くすべて</small></th><td>${featureValue(true)}</td><td>${featureValue(true)}</td></tr>
@@ -1087,7 +1088,7 @@
           <button type="button" class="billing-option" data-action="set-billing" data-billing="monthly" aria-pressed="false">月払い</button>
           <button type="button" class="billing-option" data-action="set-billing" data-billing="annual" aria-pressed="false">年払い<span class="save-badge">20%OFF</span></button>
         </div>
-        <div data-billing-plan="${plan.id}"><div class="dialog-plan-price"><span class="plan-price-original dialog-plan-original" data-annual hidden>通常 ${(plan.price*ANNUAL_MONTHS).toLocaleString('ja-JP')} 円 / 年</span><span data-price-total>${plan.price.toLocaleString('ja-JP')}</span><span data-price-period>円 / 月</span></div><p class="plan-annual-note" data-annual hidden>20%OFF — ひと月あたり約 ${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')} 円相当・年間 ${annualSavings(plan).toLocaleString('ja-JP')} 円お得</p></div>
+        <div data-billing-plan="${plan.id}"><div class="dialog-plan-price price-block"><span class="plan-price-original" data-annual hidden>通常 ${(plan.price*ANNUAL_MONTHS).toLocaleString('ja-JP')} 円</span><span class="price-current"><span data-price-total>${plan.price.toLocaleString('ja-JP')}</span><span data-price-period>円 / 月</span></span></div><p class="plan-annual-note" data-annual hidden>20%OFF — ひと月あたり約 ${Math.round(annualPrice(plan)/ANNUAL_MONTHS).toLocaleString('ja-JP')} 円相当・年間 ${annualSavings(plan).toLocaleString('ja-JP')} 円お得</p></div>
         <ul class="dialog-plan-features">${features.map(feature=>`<li>${icon('check')}<span>${esc(feature)}</span></li>`).join('')}</ul>${id==='vip' ? `<p class="inline-note" style="margin-top:14px">対象外: ${[...VIP_EXCLUSIONS.templates,...VIP_EXCLUSIONS.ores].map(esc).join('、')}。</p>` : ''}
         ${checkout ? `<p class="dialog-description">外部の購入ページへ移動します。支払い方法・契約の更新・解約条件を確認したうえでお申し込みください。</p><div class="dialog-actions"><a class="btn btn-primary" href="${esc(checkout)}" target="_blank" rel="noopener noreferrer">購入ページで確認${icon('diagonal')}</a>${terms ? `<a class="text-link" href="${esc(terms)}" target="_blank" rel="noopener noreferrer">購入条件${icon('diagonal')}</a>` : ''}</div>` : '<div class="notice blue"><h3>Webからのお申し込みは準備中です</h3><p>現在はプランの詳細をご確認いただけます。この操作によって申し込みや課金が発生することはありません。</p></div><div class="dialog-footer"><a class="text-link" href="#/faq">VIPについてのFAQを見る'+icon('arrow')+'</a><button type="button" class="text-link" style="border:0;background:none" data-action="close-dialog">閉じる</button></div>'}`);
       updateBillingUI();
@@ -1175,6 +1176,7 @@
         if(period) period.textContent=billing.period;
       });
       document.querySelectorAll('[data-annual]').forEach(element=>{ element.hidden=!annual; });
+      document.querySelectorAll('.price-block').forEach(element=>{ element.classList.toggle('is-annual',annual); });
       document.querySelectorAll('[data-billing-caption]').forEach(element=>{
         element.textContent=annual ? '年払い / 20%OFF' : '月払い';
       });
